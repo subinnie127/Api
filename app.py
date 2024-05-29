@@ -84,7 +84,17 @@ def obtener_productos():
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
-
+    
+@app.route('/api/productos/<int:id>', methods=['DELETE'])
+def eliminar_producto(id):
+    try:
+        producto = Producto.query.get_or_404(id)
+        db.session.delete(producto)
+        db.session.commit()
+        return jsonify({'mensaje': 'Producto eliminado correctamente'}), 200
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': 'No se pudo eliminar el producto'}), 500
 
 if __name__ == '__main__':
     if not os.path.exists(app.config['UPLOAD_FOLDER']):

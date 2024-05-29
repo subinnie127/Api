@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Producto</title>
+    <title>Crear y Listar Productos</title>
 </head>
 <body>
     <h1>Crear Producto</h1>
@@ -35,6 +35,9 @@
         <button type="submit">Crear Producto</button>
     </form>
 
+    <h1>Lista de Productos</h1>
+    <ul id="listaProductos"></ul>
+
     <script>
         document.getElementById('productoForm').addEventListener('submit', function(event) {
             event.preventDefault();
@@ -51,10 +54,58 @@
                 } else {
                     alert(data.mensaje);
                     document.getElementById('productoForm').reset();
+                    actualizarListaProductos(); // Actualizar la lista de productos después de crear uno nuevo
                 }
             })
             .catch(error => console.error('Error:', error));
         });
+
+        function actualizarListaProductos() {
+    fetch('/api/productos')
+        .then(response => response.json())
+        .then(productos => {
+            const listaProductos = document.getElementById('listaProductos');
+            listaProductos.innerHTML = ''; // Limpiar la lista antes de actualizarla
+            productos.forEach(producto => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <strong>Nombre:</strong> ${producto.nombre}<br>
+                    <strong>Categoría:</strong> ${producto.categoria}<br>
+                    <strong>Descripción:</strong> ${producto.descripcion}<br>
+                    <strong>Talla:</strong> ${producto.talla}<br>
+                    <strong>Precio:</strong> ${producto.precio} CLP<br>
+                    <strong>Stock:</strong> ${producto.stock}<br>
+                    <strong>Disponible:</strong> ${producto.disponible ? 'Sí' : 'No'}<br>
+                    <strong>Imagen:</strong><br>
+                    <img src="${producto.imagen}" alt="${producto.nombre}" style="width: 100px;"><br><br>
+                    <button onclick="eliminarProducto(${producto.id})">Eliminar</button>
+                    <hr>
+                `;
+                listaProductos.appendChild(listItem);
+            });
+        })
+        .catch(error => console.error('Error:', error));
+}
+function eliminarProducto(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+                fetch(`/api/productos/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Si la eliminación fue exitosa, volver a cargar la lista de productos
+                        cargarListaProductos();
+                    } else {
+                        // Si hubo un error al eliminar el producto, mostrar un mensaje de error
+                        alert('Error al eliminar el producto');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        }
+        // Llamar a actualizarListaProductos al cargar la página para mostrar la lista inicial de productos
+        actualizarListaProductos();
     </script>
 </body>
 </html>
+
