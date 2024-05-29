@@ -96,6 +96,29 @@ def eliminar_producto(id):
         print(f"Error: {e}")
         return jsonify({'error': 'No se pudo eliminar el producto'}), 500
 
+@app.route('/api/productos/<int:id>', methods=['PUT'])
+def editar_producto(id):
+    try:
+        producto = Producto.query.get(id)
+        if not producto:
+            return jsonify({'error': 'Producto no encontrado'}), 404
+
+        # Actualizar los datos del producto con los recibidos en la solicitud
+        producto.nombre = request.form['nombre']
+        producto.categoria = request.form['categoria']
+        producto.descripcion = request.form['descripcion']
+        producto.talla = request.form['talla']
+        producto.precio = float(request.form['precio'])
+        producto.stock = int(request.form['stock'])
+        producto.disponible = bool(request.form.get('disponible'))
+        
+        # Guardar los cambios en la base de datos
+        db.session.commit()
+
+        return jsonify({'mensaje': 'Producto actualizado exitosamente'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
         os.makedirs(app.config['UPLOAD_FOLDER'])

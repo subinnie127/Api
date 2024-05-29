@@ -39,54 +39,82 @@
     <ul id="listaProductos"></ul>
 
     <script>
-        document.getElementById('productoForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const formData = new FormData(this);
+        // Función para cargar y mostrar la lista de productos
+        function cargarListaProductos() {
+            fetch('/api/productos')
+                .then(response => response.json())
+                .then(productos => {
+                    const listaProductos = document.getElementById('listaProductos');
+                    listaProductos.innerHTML = ''; // Limpiar la lista antes de actualizarla
+                    productos.forEach(producto => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                            <strong>Nombre:</strong> ${producto.nombre}<br>
+                            <strong>Categoría:</strong> ${producto.categoria}<br>
+                            <strong>Descripción:</strong> ${producto.descripcion}<br>
+                            <strong>Talla:</strong> ${producto.talla}<br>
+                            <strong>Precio:</strong> ${producto.precio} CLP<br>
+                            <strong>Stock:</strong> ${producto.stock}<br>
+                            <strong>Disponible:</strong> ${producto.disponible ? 'Sí' : 'No'}<br>
+                            <strong>Imagen:</strong><br>
+                            <img src="${producto.imagen}" alt="${producto.nombre}" style="width: 100px;"><br><br>
+                            <button onclick="editarProducto(${producto.id})">Editar</button> <!-- Botón para editar el producto -->
+                            <button onclick="eliminarProducto(${producto.id})">Eliminar</button>
+                            <hr>
+                        `;
+                        listaProductos.appendChild(listItem);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
 
-            fetch('/api/productos', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert('Error: ' + data.error);
-                } else {
-                    alert(data.mensaje);
-                    document.getElementById('productoForm').reset();
-                    actualizarListaProductos(); // Actualizar la lista de productos después de crear uno nuevo
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        });
+        // Función para editar un producto
+        function editarProducto(id) {
+    // Obtener los valores de los campos del formulario
+    const nombre = document.getElementById('nombre').value;
+    const categoria = document.getElementById('categoria').value;
+    const descripcion = document.getElementById('descripcion').value;
+    const talla = document.getElementById('talla').value;
+    const precio = document.getElementById('precio').value;
+    const stock = document.getElementById('stock').value;
+    const disponible = document.getElementById('disponible').checked;
 
-        function actualizarListaProductos() {
-    fetch('/api/productos')
-        .then(response => response.json())
-        .then(productos => {
-            const listaProductos = document.getElementById('listaProductos');
-            listaProductos.innerHTML = ''; // Limpiar la lista antes de actualizarla
-            productos.forEach(producto => {
-                const listItem = document.createElement('li');
-                listItem.innerHTML = `
-                    <strong>Nombre:</strong> ${producto.nombre}<br>
-                    <strong>Categoría:</strong> ${producto.categoria}<br>
-                    <strong>Descripción:</strong> ${producto.descripcion}<br>
-                    <strong>Talla:</strong> ${producto.talla}<br>
-                    <strong>Precio:</strong> ${producto.precio} CLP<br>
-                    <strong>Stock:</strong> ${producto.stock}<br>
-                    <strong>Disponible:</strong> ${producto.disponible ? 'Sí' : 'No'}<br>
-                    <strong>Imagen:</strong><br>
-                    <img src="${producto.imagen}" alt="${producto.nombre}" style="width: 100px;"><br><br>
-                    <button onclick="eliminarProducto(${producto.id})">Eliminar</button>
-                    <hr>
-                `;
-                listaProductos.appendChild(listItem);
-            });
-        })
-        .catch(error => console.error('Error:', error));
+    // Verificar si los campos numéricos tienen valores válidos
+    if (precio === '' || isNaN(parseFloat(precio))) {
+        alert('Por favor, introduce un precio válido.');
+        return;
+    }
+
+    if (stock === '' || isNaN(parseInt(stock))) {
+        alert('Por favor, introduce un stock válido.');
+        return;
+    }
+
+    // Crear un objeto FormData con los datos del formulario
+    const formData = new FormData(document.getElementById('productoForm'));
+
+    // Enviar la solicitud PUT al servidor
+    fetch(`/api/productos/${id}`, {
+        method: 'PUT',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            alert(data.mensaje);
+            document.getElementById('productoForm').reset();
+            document.getElementById('productoId').value = '';
+            cargarListaProductos();
+        }
+    })
+    .catch(error => console.error('Error:', error));
 }
-function eliminarProducto(id) {
+
+
+        // Función para eliminar un producto
+        function eliminarProducto(id) {
             if (confirm('¿Estás seguro de que deseas eliminar este producto?')) {
                 fetch(`/api/productos/${id}`, {
                     method: 'DELETE'
@@ -103,9 +131,35 @@ function eliminarProducto(id) {
                 .catch(error => console.error('Error:', error));
             }
         }
-        // Llamar a actualizarListaProductos al cargar la página para mostrar la lista inicial de productos
-        actualizarListaProductos();
+
+        // Manejador de eventos para enviar el formulario para crear o editar un producto
+        document.getElementById('productoForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const productoId = document.getElementById('productoId').value;
+            const metodo = productoId ? 'PUT' : 'POST';
+            const url = productoId ? `/api/productos/${productoId}` : '/api/productos';
+
+            fetch(url, {
+                method: metodo,
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    alert(data.mensaje);
+                    document.getElementById('productoForm').reset();
+                    document.getElementById('productoId').value = '';
+                    cargarListaProductos();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        // Cargar la lista de productos al cargar la página
+        cargarListaProductos();
     </script>
 </body>
 </html>
-
