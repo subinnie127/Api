@@ -32,13 +32,35 @@
         <label for="imagen">Imagen:</label>
         <input type="file" id="imagen" name="imagen" accept="image/png, image/jpeg" required><br><br>
         
-        <button type="submit">Crear Producto</button>
+        <button type="button" id="botonCrearProducto">Crear Producto</button>
     </form>
 
     <h1>Lista de Productos</h1>
     <ul id="listaProductos"></ul>
 
     <script>
+                function crearProducto() {
+            const formData = new FormData(document.getElementById('productoForm'));
+
+            fetch('/api/productos', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    alert(data.mensaje);
+                    document.getElementById('productoForm').reset();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+        
+        document.getElementById('botonCrearProducto').addEventListener('click', function() {
+    crearProducto();
+    });
         // Función para cargar y mostrar la lista de productos
         function cargarListaProductos() {
             fetch('/api/productos')
@@ -159,7 +181,10 @@
         });
 
         // Cargar la lista de productos al cargar la página
+        document.addEventListener('DOMContentLoaded',function()
+    {
         cargarListaProductos();
+    });
     </script>
 </body>
 </html>
